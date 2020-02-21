@@ -192,6 +192,7 @@ describe Sneakers::Worker do
             :exclusive => false,
             :arguments => {}
           },
+          :trace_message_id => false,
           :hooks => {},
           :handler => Sneakers::Handlers::Oneshot,
           :heartbeat => 30,
@@ -230,6 +231,7 @@ describe Sneakers::Worker do
             :exclusive => true,
             :arguments => { 'x-arg' => 'value' }
           },
+          :trace_message_id => false,
           :hooks => {},
           :handler => Sneakers::Handlers::Oneshot,
           :heartbeat => 5,
@@ -268,6 +270,7 @@ describe Sneakers::Worker do
             :exclusive => false,
             :arguments => { 'x-arg2' => 'value2' }
           },
+          :trace_message_id => false,
           :hooks => {},
           :handler => Sneakers::Handlers::Oneshot,
           :heartbeat => 30,
@@ -557,6 +560,23 @@ describe Sneakers::Worker do
         mock(w.logger).warn('cuz')
         mock(w.logger).error(/\[Exception error="boom!" error_class=RuntimeError worker_class=DummyWorker\]/)
         w.worker_error(RuntimeError.new('boom!'), 'cuz')
+      end
+    end
+
+    describe 'trace_message_id true' do
+      it 'tagged message id' do
+        message_id = 'm-123'
+        log = Logger.new('/dev/null')
+        def log.tagged(opts = {})
+          yield
+        end
+        mock.proxy(log).tagged(message_id: message_id).times(2)
+        mock(log).debug(anything).once
+        mock(log).info("hello").once
+        Sneakers::Worker.configure_logger(log)
+
+        w = LoggingWorker.new(@queue, TestPool.new, trace_message_id: true)
+        w.do_work(nil,{message_id: message_id},'msg',nil)
       end
     end
   end
