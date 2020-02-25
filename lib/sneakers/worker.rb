@@ -42,10 +42,10 @@ module Sneakers
     end
 
     def do_work(delivery_info, metadata, msg, handler)
-      worker_trace "Working off: #{msg.inspect}"
-
-      @pool.post do
-        process_work(delivery_info, metadata, msg, handler)
+      if @opts[:trace_message_id]
+        do_work_with_trace_message_id(delivery_info, metadata, msg, handler)
+      else
+        do_work_without_trace_message_id(delivery_info, metadata, msg, handler)
       end
     end
 
@@ -151,6 +151,32 @@ module Sneakers
 
       def publisher
         @publisher ||= Sneakers::Publisher.new(queue_opts)
+      end
+    end
+
+    private
+
+    def do_work_with_trace_message_id(delivery_info, metadata, msg, handler)
+      raise 'logger must have tagged method if trace_message_id is true' unless logger.respond_to?(:tagged)
+
+      message_id = metadata[:message_id]
+      logger.tagged(message_id: message_id) do
+        worker_trace "Working off: #{msg.inspect}"
+      end
+
+      @pool.post do
+        # each thread need explicit tagged
+        logger.tagged(message_id: message_id) do
+          process_work(delivery_info, metadata, msg, handler)
+        end
+      end
+    end
+
+    def do_work_without_trace_message_id(delivery_info, metadata, msg, handler)
+      worker_trace "Working off: #{msg.inspect}"
+
+      @pool.post do
+        process_work(delivery_info, metadata, msg, handler)
       end
     end
   end

@@ -3,7 +3,7 @@ module Sneakers
   module ErrorReporter
     class DefaultLogger
       def call(exception, worker, context_hash)
-        Sneakers.logger.warn(context_hash) unless context_hash.empty?
+        Sneakers.logger.warn(context_hash.to_s) unless context_hash.empty?
         log_string = ''
         log_string += "[Exception error=#{exception.message.inspect} error_class=#{exception.class} worker_class=#{worker.class}"  unless exception.nil?
         log_string += " backtrace=#{exception.backtrace.take(50).join(',')}" unless exception.nil? || exception.backtrace.nil?

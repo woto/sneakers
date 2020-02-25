@@ -45,7 +45,8 @@ module Sneakers
       :hooks              => {},
       :exchange           => 'sneakers',
       :exchange_options   => EXCHANGE_OPTION_DEFAULTS,
-      :queue_options      => QUEUE_OPTION_DEFAULTS
+      :queue_options      => QUEUE_OPTION_DEFAULTS,
+      :trace_message_id   => false
     }.freeze
 
 
